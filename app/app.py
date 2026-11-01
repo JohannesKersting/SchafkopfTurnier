@@ -1,42 +1,65 @@
+import os
+from urllib.parse import quote, unquote
+
 import dash
 import dash_bootstrap_components as dbc
-from dash import Dash, dcc, html, Input, Output, State, callback
-from flask import Flask
-import globals
-import os
+import flask
+from dash import dcc, html, Input, Output, callback
 
-FONT_AWESOME = (
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-)
+import einstellungen
+import qr
+import turnier as t
+from seiten import admin, tisch, turnier_seite
 
-server = Flask(__name__)
-app = dash.Dash(server=server, title='Schafkopf Tunier', use_pages=True,
-                external_stylesheets=[dbc.themes.BOOTSTRAP, FONT_AWESOME])
-
-def get_tournament_list():
-    return [name for name in os.listdir(globals.DATA_DIR) if os.path.isdir(os.path.join(globals.DATA_DIR, name))]
+server = flask.Flask(__name__)
+app = dash.Dash(__name__, server=server, title="Schafkopf Turnier", suppress_callback_exceptions=True,
+                external_stylesheets=[dbc.themes.BOOTSTRAP],
+                meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}])
 
 app.layout = html.Div([
-    dcc.Store(id='store-tournament_list',
-              data=get_tournament_list()),
-    dash.page_container
+    dcc.Location(id="url"),
+    html.Div(id="seite"),
 ])
 
 
-@callback(Output('store-tournament_list', 'data', allow_duplicate=True),
-          Input('main-tournament-dropdown', 'value'),
-          prevent_initial_call=True)
-def update_tournament_list_admin(dummy):
-    return get_tournament_list()
+def startseite():
+    return dbc.Container([
+        html.H1("Schafkopf Turnier", className="my-3"),
+        dbc.ListGroup([dbc.ListGroupItem(dcc.Link(name, href=f"/{quote(name)}")) for name in t.turnier_liste()]),
+        dcc.Link("Admin", href="/admin", className="d-block mt-3"),
+    ])
 
 
-@callback(Output('store-tournament_list', 'data', allow_duplicate=True),
-          Input('add_tournament-alert-created', 'children'),
-          prevent_initial_call=True)
-def update_tournament_list_main(dummy):
-    return get_tournament_list()
+def nicht_gefunden(text):
+    return dbc.Container(dbc.Alert(text, color="danger", className="mt-3"))
 
 
-if __name__ == '__main__':
-    debug = os.getenv('DEBUG', 'True') == "True"
-    app.run_server(debug=debug, host='0.0.0.0', port=8050, threaded=True)
+@callback(Output("seite", "children"), Input("url", "pathname"))
+def seite_anzeigen(pfad):
+    """Eigenes Routing statt Dash Pages, damit Turnier- und Tischnamen mit Umlauten,
+    Leerzeichen oder Emojis sauber aus der URL dekodiert werden."""
+    teile = [unquote(teil) for teil in (pfad or "/").strip("/").split("/") if teil]
+    if not teile:
+        return startseite()
+    if teile == ["admin"]:
+        return admin.layout()
+    turnier = t.Turnier.laden(teile[0])
+    if not turnier:
+        return nicht_gefunden(f"Turnier '{teile[0]}' nicht gefunden.")
+    if len(teile) == 1:
+        return turnier_seite.layout(turnier)
+    if len(teile) == 2:
+        return tisch.layout(turnier, teile[1])
+    return nicht_gefunden("Seite nicht gefunden.")
+
+
+@server.route("/_qr/<turnier>/<path:datei>")
+def qr_datei(turnier, datei):
+    if t.name_fehler(turnier, "Turniere"):
+        flask.abort(404)
+    return flask.send_from_directory(os.path.join(einstellungen.DATA_DIR, turnier, qr.QR_ORDNER), datei)
+
+
+if __name__ == "__main__":
+    debug = os.getenv("DEBUG", "False") == "True"
+    app.run(debug=debug, host="0.0.0.0", port=einstellungen.PORT, threaded=True)

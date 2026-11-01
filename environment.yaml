@@ -1,11 +1,14 @@
 name: SchafkopfTunier
 channels:
   - conda-forge
-  - bioconda
   - nodefaults
 dependencies:
-  - dash
+  - python=3.12
+  - dash>=4
+  - dash-bootstrap-components>=2
   - flask
-  - dash-bootstrap-components
-  - pip:
-    - dash-qr-manager
+  - plotly
+  - pyyaml
+  - qrcode
+  - pillow
+  - pytest

@@ -1,0 +1,18 @@
+name: test
+runden: 2
+spiele_pro_runde: 32
+startpunkte: 100
+tische:
+- '1'
+spieler:
+- '1'
+- '2'
+- '3'
+- '4'
+tarife:
+  sauspiel: 1
+  solo: 2
+  schneider: 1
+  laufende: 1
+zusammenwerfen_erlaubt: false
+basis_url: ''
