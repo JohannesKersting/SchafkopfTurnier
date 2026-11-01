@@ -1,2 +1,5 @@
 spiel	geber	spielart	stufe	laufende	spieler	herzsolo	Michi	Marie	Gitta	Tim
 1	Michi	Wenz	Spiel	0	Michi		6	-2	-2	-2
+2	Marie	Sauspiel	Schwarz	0			-3	3	3	-3
+3	Gitta	Wenz	Schneider	3	Tim		-6	-6	-6	18
+4	Tim	Solo	Schwarz	6	Gitta	Gitta	-10	-10	30	-10

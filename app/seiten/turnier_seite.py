@@ -67,14 +67,45 @@ def rangliste_tabelle(turnier: Turnier):
     ], className="table-responsive")
 
 
+def namen_entzerren(enden: list[tuple[str, int, int]], abstand: float) -> dict[str, float]:
+    """Verschiebt die Namen an den Linienenden so, dass sie sich nicht überlappen.
+    `enden` sind (name, x, y) des letzten Punkts, nur Namen mit gleichem x können kollidieren."""
+    positionen = {}
+    for x in {x for _, x, _ in enden}:
+        gruppe = sorted((y, name) for name, gx, y in enden if gx == x)
+        vorher = None
+        for y, name in gruppe:
+            y = y if vorher is None else max(y, vorher + abstand)
+            positionen[name] = vorher = y
+    return positionen
+
+
 def verlauf_grafik(turnier: Turnier, runde: int):
+    linien = sorted(auswertung.verlauf(turnier, runde).items())
     fig = go.Figure()
-    for name, punkte in sorted(auswertung.verlauf(turnier, runde).items()):
-        fig.add_trace(go.Scatter(x=list(range(len(punkte))), y=punkte, mode="lines", name=name))
+    for name, punkte in linien:
+        # Punkt nur am Linienende, er verbindet die Linie mit ihrem Namen
+        fig.add_trace(go.Scatter(x=list(range(len(punkte))), y=punkte, mode="lines+markers", name=name,
+                                 line=dict(width=2), marker=dict(size=[0] * (len(punkte) - 1) + [8])))
+
+    if linien:
+        alle = [p for _, punkte in linien for p in punkte]
+        abstand = max(max(alle) - min(alle), 10) * 0.045
+        enden = [(name, len(punkte) - 1, punkte[-1]) for name, punkte in linien]
+        positionen = namen_entzerren(enden, abstand)
+        for name, x, y in enden:
+            diff = y - turnier.startpunkte
+            farbe = "#287000" if diff > 0 else "#cb2714" if diff < 0 else "#6f604c"
+            fig.add_annotation(x=x, y=positionen[name], showarrow=False, xanchor="left", xshift=8,
+                               text=f"{name} <span style='color:{farbe}'>{f'{diff:+d}' if diff else '±0'}</span>",
+                               font=dict(size=13, color="#2b2118"))
+
     fig.update_layout(
         xaxis_title="Spiel", yaxis_title="Punkte", xaxis_range=[0, turnier.spiele_pro_runde],
         xaxis_dtick=max(1, turnier.spiele_pro_runde // 16),
-        margin=dict(l=40, r=20, t=20, b=40), template="plotly_white",
+        margin=dict(l=40, r=260, t=20, b=40),
+        # Legende an den rechten Rand der ganzen Grafik, dazwischen bleibt Platz für die Namen an den Linienenden
+        legend=dict(xref="container", x=1, xanchor="right", yref="paper", y=1, yanchor="top"), template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#fffaf0",
         font=dict(family="Vollkorn, Georgia, serif", color="#2b2118", size=14),
         uirevision=runde,  # Zoom und ausgeblendete Linien bleiben bei Aktualisierung erhalten

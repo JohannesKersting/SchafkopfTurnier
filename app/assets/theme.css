@@ -51,6 +51,11 @@ body, button, .btn, input, select {
   font-variant-numeric: lining-nums tabular-nums;
 }
 
+/* Plotly setzt inline font-variant: normal, das lässt sich nur mit !important überstimmen. */
+.js-plotly-plot text {
+  font-variant-numeric: lining-nums tabular-nums !important;
+}
+
 h1, h2, h3, h4, h5, .titel {
   font-family: 'Grenze Gotisch', 'Vollkorn', serif;
   font-weight: 600;
