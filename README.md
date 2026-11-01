@@ -43,3 +43,13 @@ heißt also, seine beiden Dateien dieser Runde zu löschen.
 ```bash
 pytest -p no:dash tests
 ```
+
+## Gestaltung
+
+Alles liegt in `app/assets/`, damit die App auch ohne Internet läuft.
+
+- Bootstrap 5.3.6, Farben überschrieben in `theme.css`
+- Schriften: [Grenze Gotisch](https://fonts.google.com/specimen/Grenze+Gotisch) und
+  [Vollkorn](https://fonts.google.com/specimen/Vollkorn), beide SIL Open Font License
+- Farbsymbole: `Bay eichel.svg`, `Bay gras.svg`, `Bay herz.svg` und `Bay schellen.svg` von
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Bay_herz.svg), gemeinfrei

@@ -1,2 +1,33 @@
 spiel	geber	spielart	stufe	laufende	spieler	herzsolo	Jojo	Toni	Achim	Tessa
 1	Jojo	Sauspiel	Spiel	0			1	-1	1	-1
+2	Toni	Wenz	Spiel	0	Toni		-2	6	-2	-2
+3	Achim	Sauspiel	Spiel	0			1	-1	1	-1
+4	Tessa	Solo	Spiel	0	Tessa	Tessa	-2	-2	-2	6
+5	Jojo	Sauspiel	Spiel	0			-1	1	1	-1
+6	Toni	Wenz	Spiel	0	Jojo		6	-2	-2	-2
+7	Achim	Solo	Spiel	0	Jojo		6	-2	-2	-2
+8	Tessa	Sauspiel	Spiel	0			1	-1	1	-1
+9	Jojo	Sauspiel	Spiel	0			-1	1	-1	1
+10	Toni	Sauspiel	Spiel	0			-1	1	1	-1
+11	Achim	Sauspiel	Spiel	0			-1	-1	1	1
+12	Tessa	Wenz	Spiel	4	Toni		-6	18	-6	-6
+13	Jojo	Solo	Spiel	4	Toni		-6	18	-6	-6
+14	Toni	Sauspiel	Spiel	5			-6	-6	6	6
+15	Achim	Sauspiel	Schneider	4			-6	-6	6	6
+16	Tessa	Sauspiel	Schwarz	3			-6	6	6	-6
+17	Jojo	Sauspiel	Schneider	3			5	5	-5	-5
+18	Toni	Sauspiel	Schwarz	5			-8	8	8	-8
+19	Achim	Wenz	Spiel	4	Achim		-6	-6	18	-6
+20	Tessa	Solo	Spiel	0	Achim		2	2	-6	2
+21	Jojo	Wenz	Spiel	0	Achim		-2	-2	6	-2
+22	Toni	Sauspiel	Schwarz	8			11	-11	-11	11
+23	Achim	Wenz	Spiel	0	Tessa		-2	-2	-2	6
+24	Tessa	Sauspiel	Schwarz	0			-3	3	-3	3
+25	Jojo	Sauspiel	Spiel	0			-1	-1	1	1
+26	Toni	Sauspiel	Spiel	0			-1	1	1	-1
+27	Achim	Sauspiel	Schwarz	8			11	-11	-11	11
+28	Tessa	Sauspiel	Schwarz	5			8	-8	-8	8
+29	Jojo	Sauspiel	Schneider	0			2	-2	2	-2
+30	Toni	Sauspiel	Schwarz	8			11	-11	11	-11
+31	Achim	Wenz	Schwarz	4	Jojo		24	-8	-8	-8
+32	Tessa	Sauspiel	Schneider	0			2	-2	2	-2

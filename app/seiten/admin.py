@@ -5,6 +5,7 @@ from dash import html, dcc, Input, Output, State, ALL, callback, ctx, no_update
 
 import qr
 import turnier as t
+from seiten import deko
 from turnier import Turnier, TurnierFehler
 
 STANDARD_TISCHE = ["Ober", "Unter", "Sau", "König", "10", "9", "8", "7"]
@@ -22,7 +23,7 @@ def naechster_tischname(vorhandene: list[str]) -> str:
 
 def layout():
     return dbc.Container([
-        html.H1("Admin", className="my-3"),
+        deko.titel("Admin"),
         dbc.Row([
             dbc.Col(turnier_liste(), md=5, className="mb-4"),
             dbc.Col(turnier_formular(), md=7),

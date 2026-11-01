@@ -9,12 +9,14 @@ from dash import dcc, html, Input, Output, callback
 import einstellungen
 import qr
 import turnier as t
-from seiten import admin, tisch, turnier_seite
+from seiten import admin, deko, tisch, turnier_seite
 
 server = flask.Flask(__name__)
+# Bootstrap, Schriften und Icons liegen in assets/, damit die App ohne Internet funktioniert.
 app = dash.Dash(__name__, server=server, title="Schafkopf Turnier", suppress_callback_exceptions=True,
-                external_stylesheets=[dbc.themes.BOOTSTRAP],
                 meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}])
+app.index_string = app.index_string.replace(
+    "{%favicon%}", '<link rel="icon" type="image/svg+xml" href="/assets/icons/herz.svg">')
 
 app.layout = html.Div([
     dcc.Location(id="url"),
@@ -24,7 +26,7 @@ app.layout = html.Div([
 
 def startseite():
     return dbc.Container([
-        html.H1("Schafkopf Turnier", className="my-3"),
+        deko.titel("Schafkopf Turnier"),
         dbc.ListGroup([dbc.ListGroupItem(dcc.Link(name, href=f"/{quote(name)}")) for name in t.turnier_liste()]),
         dcc.Link("Admin", href="/admin", className="d-block mt-3"),
     ])

@@ -4,10 +4,11 @@ Alle Buttons haben die ID {"type": "tisch-btn", "aktion": ..., "wert": ...} und 
 Callback, der den UI-Zustand (dcc.Store) bzw. die Dateien ändert und die Ansicht neu aufbaut."""
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output, State, ALL, callback, ctx
+from dash import html, dcc, Input, Output, State, ALL, callback, clientside_callback, ctx
 from dash.exceptions import PreventUpdate
 
 import wertung
+from seiten import deko
 from turnier import Turnier, TurnierFehler
 
 # Sitzplätze im Uhrzeigersinn ab oben links, in der Reihenfolge des 2x2-Rasters (Zeile für Zeile).
@@ -20,8 +21,7 @@ def layout(turnier: Turnier, tisch: str):
     ui = {"turnier": turnier.name, "tisch": tisch}
     inhalt = ansicht(turnier, ui)
     return dbc.Container([
-        html.H1(turnier.name, className="h4 mt-3 mb-0 text-center"),
-        html.H2(f"Tisch {tisch}", className="h5 text-muted text-center"),
+        deko.titel(f"Tisch {tisch}", turnier.name),
         dcc.Store(id="tisch-ui", data=ui),
         html.Div(id="tisch-inhalt", children=inhalt),
     ], className="tisch-seite")
@@ -35,12 +35,14 @@ def raster(kacheln: list):
     return html.Div([kacheln[i] for i in RASTER_REIHENFOLGE], className="kachel-raster")
 
 
-def kachel(inhalt, ausgewaehlt=False, **kwargs):
-    return html.Div(inhalt, className="kachel" + (" ausgewaehlt" if ausgewaehlt else ""), **kwargs)
+def ecken(sitz: int):
+    """Farbsymbol des Sitzplatzes in zwei Ecken, wie auf einer Spielkarte."""
+    farbe = deko.farbe(sitz)
+    return [deko.farb_icon(farbe, "ecke ecke-oben"), deko.farb_icon(farbe, "ecke ecke-unten")]
 
 
-def plus(zahl: int) -> str:
-    return f"{zahl:+d}"
+def kachel(inhalt, sitz: int, ausgewaehlt=False, **kwargs):
+    return html.Div(ecken(sitz) + inhalt, className="kachel" + (" ausgewaehlt" if ausgewaehlt else ""), **kwargs)
 
 
 # --- Ansichten ---
@@ -53,7 +55,9 @@ def ansicht(turnier: Turnier, ui: dict, meldung=None, farbe="danger"):
     ui["runde"] = runde
     ui["gesehen"] = len(tr.spiele) if tr else 0
 
-    teile = [dbc.Alert(meldung, color=farbe, dismissable=True, className="py-2")] if meldung else []
+    # Schwebt unten über dem Inhalt, damit nichts verrutscht. Fehler bleiben, bis man sie wegklickt.
+    teile = [dbc.Alert(meldung, color=farbe, dismissable=True, className="py-2 meldung",
+                       duration=None if farbe == "danger" else 2500)] if meldung else []
     if not tr or ui.get("setup_runde"):
         teile += setup_ansicht(turnier, ui.get("setup_runde") or 1, zurueck=bool(tr))
     elif turnier.runde_beendet(tr):
@@ -75,12 +79,13 @@ def setup_ansicht(turnier: Turnier, runde: int, zurueck: bool):
             html.Div(f"Platz {i + 1}" + (" · gibt zuerst" if i == 0 else ""), className="small text-muted"),
             dcc.Dropdown(id={"type": "tisch-sitz", "index": i}, options=frei, searchable=True,
                          placeholder="Wählen…", className="text-start"),
-        ])
+        ], sitz=i)
         for i in range(4)
     ]
     return [
         html.P(f"Runde {runde}: Wer sitzt am Tisch?", className="text-center fw-bold"),
         html.P("Plätze im Uhrzeigersinn, oben links beginnt.", className="text-center small text-muted"),
+        dcc.Store(id="tisch-frei", data=frei),
         raster(sitze),
         html.Div([
             btn("Tisch starten", "anlegen", runde, color="primary", size="lg", className="w-100"),
@@ -93,17 +98,17 @@ def punkte_kacheln(turnier: Turnier, tr, ui: dict, klickbar: bool, geber: str | 
     stand = tr.punkte_verlauf(turnier.startpunkte)[-1]
     auswahl = ui.get("auswahl", [])
     kacheln = []
-    for name in tr.spieler:
+    for sitz, name in enumerate(tr.spieler):
         inhalt = [
             html.Div(name, className="kachel-name"),
-            html.Div(stand[name], className="kachel-punkte"),
-            html.Div("Geber", className="badge bg-secondary" + ("" if name == geber else " invisible")),
+            html.Div(stand[name], className="kachel-punkte " + deko.wert_klasse(stand[name] - turnier.startpunkte)),
+            html.Div("Geber", className="badge badge-geber" + ("" if name == geber else " invisible")),
         ]
         if klickbar:
-            kacheln.append(html.Button(inhalt, id={"type": "tisch-btn", "aktion": "kachel", "wert": name},
+            kacheln.append(html.Button(ecken(sitz) + inhalt, id={"type": "tisch-btn", "aktion": "kachel", "wert": name},
                                        className="kachel" + (" ausgewaehlt" if name in auswahl else "")))
         else:
-            kacheln.append(kachel(inhalt, ausgewaehlt=name in auswahl))
+            kacheln.append(kachel(inhalt, sitz, ausgewaehlt=name in auswahl))
     return raster(kacheln)
 
 
@@ -187,14 +192,12 @@ def eingabe(turnier: Turnier, tr, ui: dict):
         auswahl_knoepfe(stufen, stufe, "stufe"),
         html.Div("Laufende", className="small text-muted"),
         auswahl_knoepfe(laeufer, laufende, "laufende"),
-        btn("♥ Herzsolo", "herzsolo", color="danger", outline=not ui.get("herzsolo"),
-            className="w-100 mb-2") if spielart == wertung.SOLO else None,
+        btn([deko.farb_icon("herz"), "Herzsolo"], "herzsolo", color="herzsolo",
+            className="w-100 mb-2" + (" aktiv" if ui.get("herzsolo") else "")) if spielart == wertung.SOLO else None,
         dbc.ListGroup([
             dbc.ListGroupItem([
                 html.Span(name),
-                html.Span([html.Strong(plus(aenderung[name]),
-                                       className="text-success" if aenderung[name] > 0 else "text-danger"),
-                           f" → {stand[name] + aenderung[name]}"]),
+                html.Span([html.Strong(deko.wert(aenderung[name])), f" → {stand[name] + aenderung[name]}"]),
             ], className="d-flex justify-content-between py-1")
             for name in tr.spieler
         ], className="my-2"),
@@ -298,13 +301,14 @@ def aktuellen_stand_pruefen(turnier: Turnier, ui: dict):
     return tr
 
 
-@callback(
+# Ein Spieler, der auf einem Platz gewählt ist, verschwindet aus den anderen Dropdowns. Läuft im Browser,
+# damit eine verspätete Server-Antwort nicht ein gerade geöffnetes Dropdown zurücksetzt.
+clientside_callback(
+    """function(werte, frei) {
+        return werte.map(eigener => frei.filter(s => s === eigener || !werte.includes(s)));
+    }""",
     Output({"type": "tisch-sitz", "index": ALL}, "options"),
     Input({"type": "tisch-sitz", "index": ALL}, "value"),
-    State("tisch-ui", "data"),
+    State("tisch-frei", "data"),
     prevent_initial_call=True,
 )
-def sitz_optionen(werte, ui):
-    """Ein Spieler, der auf einem Platz gewählt ist, verschwindet aus den anderen Dropdowns."""
-    frei = freie_spieler(Turnier.laden(ui["turnier"]), ui.get("setup_runde") or 1)
-    return [[s for s in frei if s == eigener or s not in werte] for eigener in werte]

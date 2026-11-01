@@ -1,0 +1,293 @@
+/* Farben des bayerischen Blatts, abgeleitet aus Eichel, Gras, Herz und Schellen. */
+:root {
+  --sk-papier: #f6f0e1;
+  --sk-karte: #fffaf0;
+  --sk-tinte: #2b2118;
+  --sk-tinte-hell: #6f604c;
+  --sk-rand: #d8cbb0;
+  --sk-tanne: #1e4d0f;
+  --sk-tanne-dunkel: #143808;
+  --sk-gras: #287000;
+  --sk-herz: #cb2714;
+  --sk-herz-hell: #f6dcd6;
+  --sk-schellen: #e0b400;
+  --sk-schellen-hell: #faefc4;
+  --sk-eichel-blau: #1f3a93;
+
+  --bs-body-bg: var(--sk-papier);
+  --bs-body-color: var(--sk-tinte);
+  --bs-body-font-family: 'Vollkorn', Georgia, serif;
+  --bs-secondary-color: var(--sk-tinte-hell);
+  --bs-border-color: var(--sk-rand);
+  --bs-link-color: var(--sk-tanne);
+  --bs-link-color-rgb: 30, 77, 15;
+  --bs-link-hover-color: var(--sk-tanne-dunkel);
+  --bs-link-hover-color-rgb: 20, 56, 8;
+  --bs-primary-rgb: 30, 77, 15;
+  --bs-success-rgb: 40, 112, 0;
+  --bs-danger-rgb: 203, 39, 20;
+  --bs-success-bg-subtle: #e3edd5;
+  --bs-success-border-subtle: #b9d29c;
+  --bs-success-text-emphasis: var(--sk-tanne-dunkel);
+  --bs-danger-bg-subtle: var(--sk-herz-hell);
+  --bs-danger-border-subtle: #eba99d;
+  --bs-danger-text-emphasis: #7a170b;
+  --bs-warning-bg-subtle: var(--sk-schellen-hell);
+  --bs-warning-border-subtle: #ecd27a;
+  --bs-warning-text-emphasis: #5c4a00;
+  --bs-info-bg-subtle: #e9e2d0;
+  --bs-info-border-subtle: var(--sk-rand);
+  --bs-info-text-emphasis: var(--sk-tinte);
+  --bs-focus-ring-color: rgba(224, 180, 0, 0.4);
+}
+
+body {
+  background: var(--sk-papier);
+}
+
+/* Vollkorn hat standardmäßig Mediävalziffern, für Punktestände sind gleich hohe Ziffern besser lesbar.
+   Buttons erben font-variant nicht, daher explizit. */
+body, button, .btn, input, select {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+h1, h2, h3, h4, h5, .titel {
+  font-family: 'Grenze Gotisch', 'Vollkorn', serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* --- Seitenkopf mit Zierleiste --- */
+
+.seiten-kopf {
+  text-align: center;
+  margin: 1rem 0 1.25rem;
+}
+
+.seiten-kopf .titel {
+  font-size: 2.4rem;
+}
+
+.seiten-kopf .untertitel {
+  font-family: 'Grenze Gotisch', serif;
+  font-size: 1.4rem;
+  color: var(--sk-tinte-hell);
+}
+
+.farben-leiste {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.4rem;
+}
+
+.farben-leiste::before, .farben-leiste::after {
+  content: "";
+  flex: 0 1 4rem;
+  border-top: 1px solid var(--sk-rand);
+}
+
+.farb-icon {
+  height: 1.3rem;
+  width: auto;
+}
+
+/* --- Buttons --- */
+
+.btn {
+  font-family: 'Vollkorn', serif;
+  font-weight: 600;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--sk-tanne);
+  --bs-btn-border-color: var(--sk-tanne);
+  --bs-btn-hover-bg: var(--sk-tanne-dunkel);
+  --bs-btn-hover-border-color: var(--sk-tanne-dunkel);
+  --bs-btn-active-bg: var(--sk-tanne-dunkel);
+  --bs-btn-active-border-color: var(--sk-tanne-dunkel);
+  --bs-btn-disabled-bg: #8a9a80;
+  --bs-btn-disabled-border-color: #8a9a80;
+  --bs-btn-focus-shadow-rgb: 224, 180, 0;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--sk-tanne);
+  --bs-btn-border-color: var(--sk-tanne);
+  --bs-btn-bg: var(--sk-karte);
+  --bs-btn-hover-color: var(--sk-tinte);
+  --bs-btn-hover-bg: var(--sk-schellen-hell);
+  --bs-btn-hover-border-color: var(--sk-tanne);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--sk-tanne);
+  --bs-btn-active-border-color: var(--sk-tanne);
+  --bs-btn-focus-shadow-rgb: 224, 180, 0;
+}
+
+.btn-success {
+  --bs-btn-bg: var(--sk-gras);
+  --bs-btn-border-color: var(--sk-gras);
+  --bs-btn-hover-bg: var(--sk-tanne);
+  --bs-btn-hover-border-color: var(--sk-tanne);
+  --bs-btn-active-bg: var(--sk-tanne);
+  --bs-btn-active-border-color: var(--sk-tanne);
+}
+
+.btn-danger {
+  --bs-btn-bg: var(--sk-herz);
+  --bs-btn-border-color: var(--sk-herz);
+  --bs-btn-hover-bg: #a81e0f;
+  --bs-btn-hover-border-color: #a81e0f;
+  --bs-btn-active-bg: #a81e0f;
+  --bs-btn-active-border-color: #a81e0f;
+}
+
+.btn-secondary, .btn-outline-secondary {
+  --bs-btn-color: var(--sk-tinte-hell);
+  --bs-btn-border-color: var(--sk-rand);
+  --bs-btn-bg: var(--sk-karte);
+  --bs-btn-hover-color: var(--sk-tinte);
+  --bs-btn-hover-bg: #ede3cc;
+  --bs-btn-hover-border-color: var(--sk-tinte-hell);
+  --bs-btn-active-color: var(--sk-tinte);
+  --bs-btn-active-bg: #ede3cc;
+  --bs-btn-active-border-color: var(--sk-tinte-hell);
+}
+
+.btn-herzsolo {
+  --bs-btn-color: var(--sk-herz);
+  --bs-btn-bg: var(--sk-karte);
+  --bs-btn-border-color: var(--sk-herz);
+  --bs-btn-hover-color: var(--sk-herz);
+  --bs-btn-hover-bg: var(--sk-herz-hell);
+  --bs-btn-hover-border-color: var(--sk-herz);
+  --bs-btn-active-color: var(--sk-herz);
+  --bs-btn-active-bg: var(--sk-herz-hell);
+  --bs-btn-active-border-color: var(--sk-herz);
+}
+
+.btn-herzsolo .farb-icon {
+  height: 1.2em;
+  margin-right: 0.4rem;
+  vertical-align: -0.2em;
+  filter: grayscale(1) opacity(0.45);
+}
+
+.btn-herzsolo.aktiv {
+  background: var(--sk-herz-hell);
+  border-width: 2px;
+}
+
+.btn-herzsolo.aktiv .farb-icon {
+  filter: none;
+}
+
+/* --- Formulare, Tabs, Tabellen --- */
+
+.form-control, .form-select {
+  background-color: var(--sk-karte);
+}
+
+.form-check-input:checked {
+  background-color: var(--sk-tanne);
+  border-color: var(--sk-tanne);
+}
+
+.nav-tabs .nav-link {
+  color: var(--sk-tinte-hell);
+  font-family: 'Grenze Gotisch', serif;
+  font-size: 1.25rem;
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--sk-tinte);
+  background: var(--sk-karte);
+  border-color: var(--sk-rand) var(--sk-rand) var(--sk-karte);
+}
+
+.table {
+  --bs-table-bg: var(--sk-karte);
+  --bs-table-striped-bg: #f4ecd8;
+  --bs-table-hover-bg: var(--sk-schellen-hell);
+  --bs-table-border-color: var(--sk-rand);
+}
+
+.table th {
+  font-weight: 700;
+}
+
+.card, .list-group {
+  --bs-card-bg: var(--sk-karte);
+  --bs-list-group-bg: var(--sk-karte);
+  --bs-card-border-color: var(--sk-rand);
+  --bs-list-group-border-color: var(--sk-rand);
+}
+
+/* --- Werte --- */
+
+.positiv {
+  color: var(--sk-gras);
+}
+
+.negativ {
+  color: var(--sk-herz);
+}
+
+.badge-geber {
+  background: var(--sk-eichel-blau);
+}
+
+/* --- Spielkarten-Optik (Tischübersicht) --- */
+
+.spielkarte {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  background: var(--sk-karte);
+  border: 1px solid var(--sk-rand);
+  border-radius: 0.9rem;
+  box-shadow: inset 0 0 0 5px var(--sk-karte), inset 0 0 0 6px var(--sk-rand), 0 2px 6px rgba(43, 33, 24, 0.12);
+  padding: 1rem 2.6rem 2.2rem 2.6rem;
+}
+
+.spielkarte .ecke {
+  position: absolute;
+  height: 1.2rem;
+  width: auto;
+}
+
+.spielkarte .ecke-oben {
+  top: 0.9rem;
+  left: 0.8rem;
+}
+
+.spielkarte .ecke-unten {
+  bottom: 0.9rem;
+  right: 0.8rem;
+  transform: rotate(180deg);
+}
+
+.spielkarte .wasserzeichen {
+  position: absolute;
+  right: -0.5rem;
+  bottom: -0.5rem;
+  height: 60%;
+  width: auto;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.spielkarte .karten-titel {
+  font-size: 1.8rem;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.spielkarte > * {
+  position: relative;
+}
+
+.spielkarte > .ecke, .spielkarte > .wasserzeichen {
+  position: absolute;
+}
