@@ -296,3 +296,33 @@ h1, h2, h3, h4, h5, .titel {
 .spielkarte > .ecke, .spielkarte > .wasserzeichen {
   position: absolute;
 }
+
+.spielkarte.highlight .karten-titel {
+  font-size: 1.5rem;
+}
+
+/* Highlights: schmale Spalten, Karten wie locker auf den Tisch gelegt */
+.highlight-raster {
+  column-width: 17rem;
+  column-gap: 1.25rem;
+  padding: 0.25rem;
+}
+
+.highlight-raster > .spielkarte {
+  display: block;
+  break-inside: avoid;
+  margin-bottom: 1.25rem;
+  height: auto;
+  transition: transform 0.2s ease;
+}
+
+/* Unregelmäßige Neigung über verschiedene Teiler, damit kein Muster entsteht */
+.highlight-raster > .spielkarte:nth-child(2n) { transform: rotate(-0.9deg); }
+.highlight-raster > .spielkarte:nth-child(3n) { transform: rotate(0.7deg); }
+.highlight-raster > .spielkarte:nth-child(5n+1) { transform: rotate(1.3deg); }
+.highlight-raster > .spielkarte:nth-child(7n+3) { transform: rotate(-1.4deg); }
+
+.highlight-raster > .spielkarte:hover {
+  transform: rotate(0) scale(1.03);
+  z-index: 1;
+}

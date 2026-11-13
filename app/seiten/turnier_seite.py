@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 from dash import html, dcc, Input, Output, State, callback
 
 import auswertung
+import highlights
 import qr
 from seiten import deko
 from turnier import Turnier
@@ -28,6 +29,7 @@ def layout(turnier: Turnier):
                                         for r in range(1, turnier.runden + 1)]),
                 dcc.Graph(id="turnier-verlauf", style={"height": "75vh"}),
             ]), label="Verlauf", tab_id="verlauf"),
+            dbc.Tab(html.Div(id="turnier-highlights", className="mt-3"), label="Highlights", tab_id="highlights"),
             dbc.Tab(html.Div([
                 dbc.Switch(id="turnier-qr_anzeigen", label="QR-Codes anzeigen", value=False, className="my-3"),
                 html.Div(id="turnier-tische"),
@@ -115,14 +117,13 @@ def verlauf_grafik(turnier: Turnier, runde: int):
     return fig
 
 
-def spielkarte(tisch_index: int, inhalt: list):
+def spielkarte(farbe: str, inhalt: list, className: str = ""):
     """Karte im Stil einer Spielkarte: Farbsymbol in den Ecken und groß als Wasserzeichen."""
-    farbe = deko.farbe(tisch_index)
     return html.Div([
         deko.farb_icon(farbe, "wasserzeichen"),
         deko.farb_icon(farbe, "ecke ecke-oben"),
         deko.farb_icon(farbe, "ecke ecke-unten"),
-    ] + inhalt, className="spielkarte")
+    ] + inhalt, className=f"spielkarte {className}")
 
 
 def karten_spalte(karte):
@@ -161,7 +162,7 @@ def tisch_uebersicht(turnier: Turnier):
             else:
                 fortschritt = "nicht angelegt"
                 zeilen = [html.Li(" ") for _ in range(4)]
-            karten.append(karten_spalte(spielkarte(i, [
+            karten.append(karten_spalte(spielkarte(deko.farbe(i), [
                 html.H5(html.A(tisch, href=f"/{quote(turnier.name)}/{quote(tisch)}",
                                className="text-reset text-decoration-none"), className="karten-titel"),
                 html.Small(fortschritt, className="text-muted"),
@@ -171,10 +172,36 @@ def tisch_uebersicht(turnier: Turnier):
     return abschnitte
 
 
+def highlight_wert(wert, vorzeichen: bool, einheit: str):
+    if isinstance(wert, float) and not wert.is_integer():
+        return f"{wert:.1f}".replace(".", ",") + einheit
+    if isinstance(wert, (int, float)):
+        return [deko.wert(int(wert)) if vorzeichen else str(int(wert)), einheit]
+    return wert
+
+
+def highlights_karten(turnier: Turnier):
+    karten = highlights.highlights(turnier)
+    if not karten:
+        return html.P("Noch keine Highlights, erst einmal spielen.", className="text-muted")
+    # Spaltenlayout statt Bootstrap-Raster: schmale Karten, die sich je nach Höhe versetzt anordnen
+    return html.Div([spielkarte(k["farbe"], [
+        html.H5(k["titel"], className="karten-titel"),
+        html.Small(k["erklaerung"], className="text-muted d-block"),
+        html.Ul([html.Li([
+            html.Div([html.Span(e["name"]),
+                      html.Small(e["detail"], className="text-muted d-block") if e["detail"] else None]),
+            html.Strong(highlight_wert(e["wert"], k["vorzeichen"], k["einheit"]), className="ms-2 text-nowrap"),
+        ], className="d-flex justify-content-between align-items-start") for e in k["eintraege"]],
+            className="list-unstyled mb-0 mt-2"),
+    ], className="highlight") for k in karten], className="highlight-raster")
+
+
 @callback(
     Output("turnier-rangliste", "children"),
     Output("turnier-verlauf", "figure"),
     Output("turnier-tische", "children"),
+    Output("turnier-highlights", "children"),
     Input("turnier-intervall", "n_intervals"),
     Input("turnier-verlauf_runde", "value"),
     Input("turnier-qr_anzeigen", "value"),
@@ -183,4 +210,4 @@ def tisch_uebersicht(turnier: Turnier):
 def aktualisieren(_, runde, qr_anzeigen, name):
     turnier = Turnier.laden(name)
     tische = qr_uebersicht(turnier) if qr_anzeigen else tisch_uebersicht(turnier)
-    return rangliste_tabelle(turnier), verlauf_grafik(turnier, runde), tische
+    return rangliste_tabelle(turnier), verlauf_grafik(turnier, runde), tische, highlights_karten(turnier)
