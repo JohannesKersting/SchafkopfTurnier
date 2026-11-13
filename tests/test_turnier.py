@@ -115,3 +115,20 @@ def test_rangliste(turnier):
     assert rangliste["A"]["wenz_eigen_gewonnen"] == 1
     assert rangliste["B"]["wenz_fremd_verloren"] == 1
     assert "H" not in rangliste
+
+
+def test_verlauf_einzelne_und_alle_runden(turnier):
+    turnier.tisch_anlegen(1, "Ober", ["A", "B", "C", "D"])
+    for _ in range(3):
+        turnier.spiel_eintragen(turnier.tischrunde(1, "Ober"), ["A", "C"], wertung.SAUSPIEL)
+    turnier.tisch_anlegen(2, "Ober", ["A", "B", "E", "F"])
+    turnier.spiel_eintragen(turnier.tischrunde(2, "Ober"), ["A", "B"], wertung.SAUSPIEL)
+
+    assert auswertung.verlauf(turnier, 2)["A"] == [(0, 100, 2, 0), (1, 110, 2, 1)]
+
+    alle = auswertung.verlauf(turnier, auswertung.ALLE_RUNDEN)
+    # Runde 2 setzt am Endstand von Runde 1 an, ohne doppelten Startpunkt
+    assert alle["A"] == [(0, 100, 1, 0), (1, 110, 1, 1), (2, 120, 1, 2), (3, 130, 1, 3), (4, 140, 2, 1)]
+    # C hat Runde 2 noch nicht begonnen, E war in Runde 1 nicht dabei
+    assert alle["C"][-1] == (3, 130, 1, 3)
+    assert alle["E"] == [(3, 100, 2, 0), (4, 90, 2, 1)]

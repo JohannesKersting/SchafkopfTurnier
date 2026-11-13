@@ -26,7 +26,9 @@ def layout(turnier: Turnier):
             dbc.Tab(html.Div([
                 dbc.RadioItems(id="turnier-verlauf_runde", inline=True, value=1, className="mt-3",
                                options=[{"label": f"Runde {r}", "value": r}
-                                        for r in range(1, turnier.runden + 1)]),
+                                        for r in range(1, turnier.runden + 1)] +
+                                       ([{"label": "Alle Runden", "value": auswertung.ALLE_RUNDEN}]
+                                        if turnier.runden > 1 else [])),
                 dcc.Graph(id="turnier-verlauf", style={"height": "75vh"}),
             ]), label="Verlauf", tab_id="verlauf"),
             dbc.Tab(html.Div(id="turnier-highlights", className="mt-3"), label="Highlights", tab_id="highlights"),
@@ -82,18 +84,41 @@ def namen_entzerren(enden: list[tuple[str, int, int]], abstand: float) -> dict[s
     return positionen
 
 
+def runden_trennung(fig, turnier: Turnier) -> None:
+    """Bei allen Runden: jede zweite Runde hinterlegt, gestrichelte Grenzen, Rundenname oben."""
+    n = turnier.spiele_pro_runde
+    for r in range(1, turnier.runden + 1):
+        von = (r - 1) * n
+        if r % 2 == 0:
+            fig.add_vrect(x0=von, x1=von + n, fillcolor="#efe4c9", opacity=0.6, line_width=0, layer="below")
+        if r > 1:
+            fig.add_vline(x=von, line=dict(color="#a8987a", width=1.5, dash="dash"), layer="below")
+        fig.add_annotation(x=von + n / 2, y=1, yref="paper", yanchor="bottom", showarrow=False,
+                           text=f"Runde {r}", font=dict(family="Grenze Gotisch, serif", size=20, color="#2b2118"))
+
+
 def verlauf_grafik(turnier: Turnier, runde: int):
+    alle = runde == auswertung.ALLE_RUNDEN
     linien = sorted(auswertung.verlauf(turnier, runde).items())
+    n = turnier.spiele_pro_runde
     fig = go.Figure()
     for name, punkte in linien:
+        # Fehlen Spiele (Runde nicht fertig gespielt), wird die Linie unterbrochen statt quer verbunden
+        x, y, daten = [], [], []
+        for px, py, r, spiel in punkte:
+            if x and px > x[-1] + 1:
+                x.append(None), y.append(None), daten.append(None)
+            x.append(px), y.append(py), daten.append((r, spiel))
         # Punkt nur am Linienende, er verbindet die Linie mit ihrem Namen
-        fig.add_trace(go.Scatter(x=list(range(len(punkte))), y=punkte, mode="lines+markers", name=name,
-                                 line=dict(width=2), marker=dict(size=[0] * (len(punkte) - 1) + [8])))
+        fig.add_trace(go.Scatter(x=x, y=y, mode="lines+markers", name=name, line=dict(width=2),
+                                 marker=dict(size=[0] * (len(x) - 1) + [8]), customdata=daten,
+                                 hovertemplate=f"{name} · Runde %{{customdata[0]}}, Spiel %{{customdata[1]}}"
+                                               f" · %{{y}} Punkte<extra></extra>"))
 
     if linien:
-        alle = [p for _, punkte in linien for p in punkte]
-        abstand = max(max(alle) - min(alle), 10) * 0.045
-        enden = [(name, len(punkte) - 1, punkte[-1]) for name, punkte in linien]
+        alle_punkte = [p[1] for _, punkte in linien for p in punkte]
+        abstand = max(max(alle_punkte) - min(alle_punkte), 10) * 0.045
+        enden = [(name, punkte[-1][0], punkte[-1][1]) for name, punkte in linien]
         positionen = namen_entzerren(enden, abstand)
         for name, x, y in enden:
             diff = y - turnier.startpunkte
@@ -102,10 +127,19 @@ def verlauf_grafik(turnier: Turnier, runde: int):
                                text=f"{name} <span style='color:{farbe}'>{f'{diff:+d}' if diff else '±0'}</span>",
                                font=dict(size=13, color="#2b2118"))
 
+    schritt = max(1, n // 16)
+    if alle:
+        runden_trennung(fig, turnier)
+        # Spielnummer zählt in jeder Runde neu, an der Grenze steht das Rundenende
+        schritt = max(1, n * turnier.runden // 16)
+        ticks = [x for x in range(0, n * turnier.runden + 1) if (x % n) % schritt == 0 or x % n == 0]
+        fig.update_xaxes(tickmode="array", tickvals=ticks,
+                         ticktext=[str(n if x and x % n == 0 else x % n) for x in ticks])
+
     fig.update_layout(
-        xaxis_title="Spiel", yaxis_title="Punkte", xaxis_range=[0, turnier.spiele_pro_runde],
-        xaxis_dtick=max(1, turnier.spiele_pro_runde // 16),
-        margin=dict(l=40, r=260, t=20, b=40),
+        xaxis_title="Spiel", yaxis_title="Punkte" + (" gesamt" if alle else ""),
+        xaxis_range=[0, n * (turnier.runden if alle else 1)], xaxis_dtick=schritt,
+        margin=dict(l=40, r=260, t=40 if alle else 20, b=40),
         # Legende an den rechten Rand der ganzen Grafik, dazwischen bleibt Platz für die Namen an den Linienenden
         legend=dict(xref="container", x=1, xanchor="right", yref="paper", y=1, yanchor="top"), template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#fffaf0",
