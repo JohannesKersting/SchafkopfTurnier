@@ -19,10 +19,10 @@ SCHNEIDER_ODER_SCHWARZ = ("Schneider", "Schwarz")
 FARBEN = {
     "Ein Spiel und ausgesorgt!": "schellen", "Das war teuer": "schellen", "Solist": "gras",
     "Alle Unter!": "eichel", "Geht auch alleine": "herz", "„Muas ma spuin“": "gras",
-    "„Spiel ruhig dein Solo!“": "eichel", "Läuft bei dir!": "eichel", "Schüchtern": "herz",
-    "Kleinvieh macht auch Mist!": "gras", "Comeback": "herz", "Nächstes mal ein Bier weniger…": "schellen",
+    "„Spui ruhig dei Solo!“": "eichel", "Läuft bei dir!": "eichel", "Koa Risiko!": "herz",
+    "Kleinvieh macht auch Mist!": "gras", "Comeback": "herz", "Nächstes Mal ein Bier weniger…": "schellen",
     "A Herz hot a jeder": "herz", "On fire": "eichel", "Pechsträhne": "gras", "Dynamisches Duo": "herz",
-    "Erzfeind": "eichel", "Bisschenwas geht immer": "gras", "Keine Chance": "schellen",
+    "Erzfeind": "eichel", "A bisserl was geht immer": "gras", "Keine Chance": "schellen",
     "Warum spiel ich eigentlich mit?": "herz", "Achterbahn": "eichel", "Schwarz gspuit!": "gras",
     "Sauspiel-Profi": "schellen", "Haifischbecken": "eichel", "Kaffeekränzchen": "herz", "Wilde Runde": "gras",
 }
@@ -130,7 +130,7 @@ def highlights(turnier: Turnier) -> list[dict]:
          zaehle(lambda s, name, d: eigenes(*SOLI)(s, name, d) and d > 0)),
         ("„Muas ma spuin“", "Meiste Farbsoli und Wenzen verloren",
          zaehle(lambda s, name, d: eigenes(*SOLI)(s, name, d) and d < 0)),
-        ("„Spiel ruhig dein Solo!“", "Meiste Farbsoli und Wenzen als Gegenspieler vereitelt",
+        ("„Spui ruhig dei Solo!“", "Meiste Farbsoli und Wenzen als Gegenspieler vereitelt",
          zaehle(lambda s, name, d: s["art"] in SOLI and s["solist"] != name and d > 0)),
     ]:
         karten.append(_karte(titel, erklaerung, waehle(werte), spieler_eintrag(werte)))
@@ -146,7 +146,7 @@ def highlights(turnier: Turnier) -> list[dict]:
 
     if beendet:
         soli = zaehle(eigenes(*SOLI))
-        karten.append(_karte("Schüchtern", "Wenigste Farbsoli und Wenzen gespielt",
+        karten.append(_karte("Koa Risiko!", "Wenigste Farbsoli und Wenzen gespielt",
                              waehle(soli, groesste=False), spieler_eintrag(soli)))
 
     kleinvieh = zaehle(lambda s, name, d: d > 0 and s["art"] == wertung.SAUSPIEL
@@ -170,7 +170,7 @@ def highlights(turnier: Turnier) -> list[dict]:
 
     karten.append(_karte("Comeback", "Größte Verbesserung von einer Runde zur nächsten",
                          waehle(sprung), sprung_eintrag, vorzeichen=True))
-    karten.append(_karte("Nächstes mal ein Bier weniger…", "Größte Verschlechterung von einer Runde zur nächsten",
+    karten.append(_karte("Nächstes Mal ein Bier weniger…", "Größte Verschlechterung von einer Runde zur nächsten",
                          waehle({k: w for k, w in sprung.items() if w < 0}, groesste=False), sprung_eintrag,
                          vorzeichen=True))
 
@@ -205,7 +205,7 @@ def highlights(turnier: Turnier) -> list[dict]:
     # --- Schneider ---
     geschneidert = zaehle(lambda s, name, d: d < 0 and s["stufe"] in SCHNEIDER_ODER_SCHWARZ)
     if beendet:
-        karten.append(_karte("Bisschenwas geht immer", "Am seltensten Schneider oder Schwarz gespielt worden",
+        karten.append(_karte("A bisserl was geht immer", "Am seltensten Schneider oder Schwarz gespielt worden",
                              waehle(geschneidert, groesste=False), spieler_eintrag(geschneidert)))
     karten.append(_karte("Keine Chance", "Am häufigsten Schneider oder Schwarz gespielt worden",
                          waehle(geschneidert), spieler_eintrag(geschneidert)))
@@ -227,10 +227,15 @@ def highlights(turnier: Turnier) -> list[dict]:
                          waehle(spannen),
                          lambda k: {"name": k[0], "wert": spannen[k], "detail": f"Runde {k[1]}"}))
 
-    schwarz = {(s["solist"], i): 1 for i, s in enumerate(spiele)
-               if s["art"] in SOLI and s["stufe"] == "Schwarz" and s["delta"][s["solist"]] > 0}
-    karten.append(_karte("Schwarz gspuit!", "Ein Solo oder einen Wenz schwarz gewonnen", waehle(schwarz),
-                         lambda k: {"name": k[0], "wert": spiele[k[1]]["art"], "detail": _spiel_detail(spiele[k[1]])}))
+    def schwarz_eintrag(s):
+        gewinner = [n for n, d in s["delta"].items() if d > 0]
+        art = f"gegen {s['art']}" if s["art"] in SOLI and s["solist"] not in gewinner else s["art"]
+        return {"name": " & ".join([", ".join(gewinner[:-1]), gewinner[-1]] if len(gewinner) > 1 else gewinner),
+                "wert": art, "detail": _spiel_detail(s)}
+
+    # Keine Gleichstands-Grenze: jedes schwarz gewonnene Spiel ist ein eigener Eintrag
+    karten.append(_karte("Schwarz gspuit!", "Ein Spiel schwarz gewonnen",
+                         [s for s in spiele if s["stufe"] == "Schwarz"], schwarz_eintrag))
 
     sauspiele = zaehle(lambda s, name, d: s["art"] == wertung.SAUSPIEL)
     sauspiel_siege = zaehle(lambda s, name, d: s["art"] == wertung.SAUSPIEL and d > 0)

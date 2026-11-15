@@ -72,17 +72,29 @@ def test_highlights(turnier):
     assert k["On fire"] == [("B", 2, "")]
     assert k["Pechsträhne"] == [("A", 2, ""), ("D", 2, "")]
     assert k["Keine Chance"] == [("A", 1, ""), ("C", 1, ""), ("D", 1, "")]
-    assert k["Schüchtern"] == [("C", 0, ""), ("D", 0, "")]
+    assert k["Koa Risiko!"] == [("C", 0, ""), ("D", 0, "")]
     assert k["Warum spiel ich eigentlich mit?"] == [("C", -30, "")]
     assert k["Wilde Runde"] == [("Ober (A, B, C, D)", 2, "Runde 1")]
     assert "Comeback" not in k  # nur eine Runde
     assert "Solist" in k and "Alle Unter!" in k
+    assert "Schwarz gspuit!" not in k
+
+
+@pytest.mark.parametrize("gewinner, art, erwartet", [
+    (["A", "C"], wertung.SAUSPIEL, ("A & C", wertung.SAUSPIEL)),
+    (["B"], wertung.SOLO, ("B", wertung.SOLO)),
+    (["B", "C", "D"], wertung.WENZ, ("B, C & D", f"gegen {wertung.WENZ}")),
+])
+def test_schwarz_gspuit(turnier, gewinner, art, erwartet):
+    turnier.letztes_spiel_entfernen(turnier.tischrunde(1, "Ober"))
+    turnier.spiel_eintragen(turnier.tischrunde(1, "Ober"), gewinner, art, "Schwarz")
+    assert karten(turnier)["Schwarz gspuit!"] == [(*erwartet, "Runde 1 · Ober · Spiel 3")]
 
 
 def test_minimum_karten_erst_nach_turnierende(turnier):
     turnier.letztes_spiel_entfernen(turnier.tischrunde(1, "Ober"))
     k = karten(turnier)
-    for titel in ["Schüchtern", "Bisschenwas geht immer", "Warum spiel ich eigentlich mit?", "Kaffeekränzchen"]:
+    for titel in ["Koa Risiko!", "A bisserl was geht immer", "Warum spiel ich eigentlich mit?", "Kaffeekränzchen"]:
         assert titel not in k
     assert "Ein Spiel und ausgesorgt!" in k
 
