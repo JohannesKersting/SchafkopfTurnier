@@ -232,16 +232,11 @@ def highlights(turnier: Turnier) -> list[dict]:
                          waehle(spannen),
                          lambda k: {"name": k[0], "wert": spannen[k], "detail": f"Runde {k[1]}"}))
 
-    def schwarz_eintrag(s):
-        gewinner = [n for n, d in s["delta"].items() if d > 0]
-        art = f"gegen {s['art']}" if s["art"] in SOLI and s["solist"] not in gewinner else s["art"]
-        return {"name": " & ".join([", ".join(gewinner[:-1]), gewinner[-1]] if len(gewinner) > 1 else gewinner),
-                "wert": art, "detail": _spiel_detail(s)}
+    schwarz = zaehle(lambda s, name, d: d > 0 and s["stufe"] == "Schwarz")
+    karten.append(_karte("Schwarz gspuit!", "Meiste Spiele schwarz gewonnen", waehle(schwarz),
+                         spieler_eintrag(schwarz)))
 
     # Ehrenlisten ohne Gleichstands-Grenze: jedes Spiel ist ein eigener Eintrag
-    karten.append(_karte("Schwarz gspuit!", "Ein Spiel schwarz gewonnen",
-                         [s for s in spiele if s["stufe"] == "Schwarz"], schwarz_eintrag))
-
     def solist_eintrag(s):
         return {"name": s["solist"], "wert": s["art"], "detail": _spiel_detail(s)}
 

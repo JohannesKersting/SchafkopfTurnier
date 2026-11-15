@@ -81,14 +81,14 @@ def test_highlights(turnier):
 
 
 @pytest.mark.parametrize("gewinner, art, erwartet", [
-    (["A", "C"], wertung.SAUSPIEL, ("A & C", wertung.SAUSPIEL)),
-    (["B"], wertung.SOLO, ("B", wertung.SOLO)),
-    (["B", "C", "D"], wertung.WENZ, ("B, C & D", f"gegen {wertung.WENZ}")),
+    (["A", "C"], wertung.SAUSPIEL, [("A", 1, ""), ("C", 1, "")]),
+    (["B"], wertung.SOLO, [("B", 1, "")]),
+    (["A", "C", "D"], wertung.WENZ, [("A", 1, ""), ("C", 1, ""), ("D", 1, "")]),
 ])
 def test_schwarz_gspuit(turnier, gewinner, art, erwartet):
     turnier.letztes_spiel_entfernen(turnier.tischrunde(1, "Ober"))
     turnier.spiel_eintragen(turnier.tischrunde(1, "Ober"), gewinner, art, "Schwarz")
-    assert karten(turnier)["Schwarz gspuit!"] == [(*erwartet, "Runde 1 · Ober · Spiel 3")]
+    assert karten(turnier)["Schwarz gspuit!"] == erwartet
 
 
 @pytest.mark.parametrize("gewinner, titel", [(["B"], "Tout gspuit!"), (["A", "C", "D"], "Zu hoch gepokert")])
