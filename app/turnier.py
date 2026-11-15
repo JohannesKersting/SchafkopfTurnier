@@ -16,7 +16,7 @@ import wertung
 CONFIG_DATEI = "turnier.yaml"
 TRENNZEICHEN = "\t"
 SPIELE_SPALTEN = ["spiel", "geber", "spielart", "stufe", "laufende", "spieler", "herzsolo"]
-STANDARD_TARIFE = {"sauspiel": 1, "solo": 2, "schneider": 1, "laufende": 1}
+STANDARD_TARIFE = {"sauspiel": 1, "solo": 2, "schneider": 1, "laufende": 1, "tout": 2, "sie": 4}
 RESERVIERTE_NAMEN = {"admin", "assets"}
 
 _schreib_lock = threading.Lock()
@@ -210,7 +210,7 @@ class Turnier:
                 "stufe": stufe if spielart != wertung.ZUSAMMENGEWORFEN else "",
                 "laufende": laufende,
                 "spieler": solist,
-                "herzsolo": solist if herzsolo and spielart == wertung.SOLO else "",
+                "herzsolo": solist if herzsolo and spielart == wertung.SOLO and stufe != wertung.SIE else "",
                 "punkte": punkte,
             })
             self._dateien_schreiben(aktuell)

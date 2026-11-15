@@ -23,7 +23,8 @@ FARBEN = {
     "Kleinvieh macht auch Mist!": "gras", "Comeback": "herz", "Nächstes Mal ein Bier weniger…": "schellen",
     "A Herz hot a jeder": "herz", "On fire": "eichel", "Pechsträhne": "gras", "Dynamisches Duo": "herz",
     "Erzfeind": "eichel", "A bisserl was geht immer": "gras", "Keine Chance": "schellen",
-    "Warum spiel ich eigentlich mit?": "herz", "Achterbahn": "eichel", "Schwarz gspuit!": "gras",
+    "Warum spiel ich eigentlich mit?": "herz", "Achterbahn": "eichel", "Schwarz gspuit!": "gras", "Tout gspuit!": "herz",
+    "Zu hoch gepokert": "schellen", "Des kimmt an d'Wand!": "eichel",
     "Sauspiel-Profi": "schellen", "Haifischbecken": "eichel", "Kaffeekränzchen": "herz", "Wilde Runde": "gras",
 }
 
@@ -140,7 +141,8 @@ def highlights(turnier: Turnier) -> list[dict]:
         wert = wertung.spielwert(turnier.tarife, s["art"], s["stufe"], s["laufende"])
         for name, d in s["delta"].items():
             if d > 0:  # brutto: nur Laufende aus gewonnenen Spielen
-                laufende_punkte[name] += d // wert * s["laufende"] * turnier.tarife["laufende"]
+                laufende_punkte[name] += (d // wert * s["laufende"] * turnier.tarife["laufende"]
+                                          * wertung.faktor(turnier.tarife, s["stufe"]))
     karten.append(_karte("Läuft bei dir!", "Meiste Punkte allein durch Laufende bekommen",
                          waehle(laufende_punkte), spieler_eintrag(laufende_punkte)))
 
@@ -203,7 +205,10 @@ def highlights(turnier: Turnier) -> list[dict]:
                          lambda paar: {"name": f"{paar[0]} → {paar[1]}", "wert": netto[paar], "detail": ""}))
 
     # --- Schneider ---
-    geschneidert = zaehle(lambda s, name, d: d < 0 and s["stufe"] in SCHNEIDER_ODER_SCHWARZ)
+    def tout_gewonnen(s):
+        return s["stufe"] == wertung.TOUT and s["delta"][s["solist"]] > 0
+
+    geschneidert = zaehle(lambda s, name, d: d < 0 and (s["stufe"] in SCHNEIDER_ODER_SCHWARZ or tout_gewonnen(s)))
     if beendet:
         karten.append(_karte("A bisserl was geht immer", "Am seltensten Schneider oder Schwarz gespielt worden",
                              waehle(geschneidert, groesste=False), spieler_eintrag(geschneidert)))
@@ -233,9 +238,21 @@ def highlights(turnier: Turnier) -> list[dict]:
         return {"name": " & ".join([", ".join(gewinner[:-1]), gewinner[-1]] if len(gewinner) > 1 else gewinner),
                 "wert": art, "detail": _spiel_detail(s)}
 
-    # Keine Gleichstands-Grenze: jedes schwarz gewonnene Spiel ist ein eigener Eintrag
+    # Ehrenlisten ohne Gleichstands-Grenze: jedes Spiel ist ein eigener Eintrag
     karten.append(_karte("Schwarz gspuit!", "Ein Spiel schwarz gewonnen",
                          [s for s in spiele if s["stufe"] == "Schwarz"], schwarz_eintrag))
+
+    def solist_eintrag(s):
+        return {"name": s["solist"], "wert": s["art"], "detail": _spiel_detail(s)}
+
+    touts = [s for s in spiele if s["stufe"] == wertung.TOUT]
+    karten.append(_karte("Tout gspuit!", "Ein Tout gewonnen", [s for s in touts if tout_gewonnen(s)],
+                         solist_eintrag))
+    karten.append(_karte("Zu hoch gepokert", "Ein Tout verloren", [s for s in touts if not tout_gewonnen(s)],
+                         solist_eintrag))
+    karten.append(_karte("Des kimmt an d'Wand!", "Alle Ober und Unter auf der Hand",
+                         [s for s in spiele if s["stufe"] == wertung.SIE],
+                         lambda s: {"name": s["solist"], "wert": "", "detail": _spiel_detail(s)}))
 
     sauspiele = zaehle(lambda s, name, d: s["art"] == wertung.SAUSPIEL)
     sauspiel_siege = zaehle(lambda s, name, d: s["art"] == wertung.SAUSPIEL and d > 0)

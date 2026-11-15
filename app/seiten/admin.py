@@ -121,6 +121,8 @@ def turnier_formular():
             zahl("Solo / Wenz", "admin-tarif_solo", t.STANDARD_TARIFE["solo"]),
             zahl("Schneider-Stufe", "admin-tarif_schneider", t.STANDARD_TARIFE["schneider"], minimum=0),
             zahl("Pro Laufendem", "admin-tarif_laufende", t.STANDARD_TARIFE["laufende"], minimum=0),
+            zahl("Tout ×", "admin-tarif_tout", t.STANDARD_TARIFE["tout"]),
+            zahl("Sie ×", "admin-tarif_sie", t.STANDARD_TARIFE["sie"]),
         ]),
         dbc.Checkbox(id="admin-zusammenwerfen", label="Zusammenwerfen erlaubt", value=False, className="mb-3"),
         dbc.Label("Tische"),
@@ -208,15 +210,17 @@ def spieler_info(spieler, tische):
     State("admin-tarif_solo", "value"),
     State("admin-tarif_schneider", "value"),
     State("admin-tarif_laufende", "value"),
+    State("admin-tarif_tout", "value"),
+    State("admin-tarif_sie", "value"),
     State("admin-zusammenwerfen", "value"),
     State({"type": "admin-tisch", "index": ALL}, "value"),
     State("admin-spieler", "value"),
     State("admin-basis_url", "value"),
     prevent_initial_call=True,
 )
-def erstellen(_, name, runden, spiele, startpunkte, sauspiel, solo, schneider, laufende, zusammenwerfen,
-              tische, spieler, basis_url):
-    zahlen = [runden, spiele, startpunkte, sauspiel, solo, schneider, laufende]
+def erstellen(_, name, runden, spiele, startpunkte, sauspiel, solo, schneider, laufende, tout, sie,
+              zusammenwerfen, tische, spieler, basis_url):
+    zahlen = [runden, spiele, startpunkte, sauspiel, solo, schneider, laufende, tout, sie]
     tische = [(n or "").strip() for n in tische]
     spieler = zeilen(spieler)
     fehler = (
@@ -230,7 +234,8 @@ def erstellen(_, name, runden, spiele, startpunkte, sauspiel, solo, schneider, l
     turnier = Turnier(
         name=(name or "").strip(), runden=runden, spiele_pro_runde=spiele, startpunkte=startpunkte,
         tische=tische, spieler=spieler,
-        tarife={"sauspiel": sauspiel, "solo": solo, "schneider": schneider, "laufende": laufende},
+        tarife={"sauspiel": sauspiel, "solo": solo, "schneider": schneider, "laufende": laufende,
+                "tout": tout, "sie": sie},
         zusammenwerfen_erlaubt=bool(zusammenwerfen), basis_url=(basis_url or "").strip(),
     )
     try:

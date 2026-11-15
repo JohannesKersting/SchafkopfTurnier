@@ -22,6 +22,17 @@ sich das anpassen.
 | `/<Turnier>` | Bildschirmansicht: Rangliste, Punkteverlauf, Tische |
 | `/<Turnier>/<Tisch>` | Handyansicht für einen Tisch, erreichbar über den QR-Code |
 
+## Wertung
+
+Ein Spiel kostet jeden Gegenspieler Grundtarif (Sauspiel oder Solo/Wenz) plus je Schneider-Stufe und
+Laufendem den eingestellten Tarif. Beim Solo bekommt bzw. zahlt der Solist das Dreifache.
+
+- **Tout** (Solo, Wenz): `Tout-Faktor × (Grundtarif + Laufende)`, Schneider und Schwarz zählen nicht extra.
+- **Sie** (nur Solo, immer gewonnen): `Sie-Faktor × (Grundtarif + 8 Laufende)`.
+
+Die Faktoren (Standard 2 und 4) werden beim Erstellen des Turniers festgelegt. Ein gewonnenes Solo mit allen
+8 Laufenden ist immer ein Sie, die Eingabe am Tisch wählt das eine automatisch mit dem anderen aus.
+
 ## Dateien
 
 ```

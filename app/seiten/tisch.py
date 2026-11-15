@@ -176,8 +176,16 @@ def eingabe(turnier: Turnier, tr, ui: dict):
     stufe, laufende = ui.get("stufe", wertung.STUFEN[0]), ui.get("laufende", 0)
     basis = tarife["sauspiel"] if spielart == wertung.SAUSPIEL else tarife["solo"]
 
-    stufen = [(f"{s} {basis + i * tarife['schneider']}", s) for i, s in enumerate(wertung.STUFEN)]
-    laeufer = [("Keine" if n == 0 else f"{n} (+{n * tarife['laufende']})", n)
+    def stufen_label(s):
+        if s == wertung.TOUT:
+            return f"{s} ×{wertung.faktor(tarife, s)}"
+        if s == wertung.SIE:
+            return f"{s} {wertung.spielwert(tarife, spielart, s, wertung.SIE_LAUFENDE)}"
+        return f"{s} {basis + wertung.STUFEN.index(s) * tarife['schneider']}"
+
+    # Ein Sie kann man nicht verlieren
+    stufen = [(stufen_label(s), s) for s in wertung.stufen(spielart) if s != wertung.SIE or len(ui["auswahl"]) == 1]
+    laeufer = [("Keine" if n == 0 else f"{n} (+{n * tarife['laufende'] * wertung.faktor(tarife, stufe)})", n)
                for n in wertung.laufende_optionen(spielart)]
 
     aenderung = wertung.punkte_aenderungen(tarife, tr.spieler, ui["auswahl"], spielart, stufe, laufende)
@@ -193,7 +201,8 @@ def eingabe(turnier: Turnier, tr, ui: dict):
         html.Div("Laufende", className="small text-muted"),
         auswahl_knoepfe(laeufer, laufende, "laufende"),
         btn([deko.farb_icon("herz"), "Herzsolo"], "herzsolo", color="herzsolo",
-            className="w-100 mb-2" + (" aktiv" if ui.get("herzsolo") else "")) if spielart == wertung.SOLO else None,
+            className="w-100 mb-2" + (" aktiv" if ui.get("herzsolo") else ""))
+        if spielart == wertung.SOLO and stufe != wertung.SIE else None,
         dbc.ListGroup([
             dbc.ListGroupItem([
                 html.Span(name),
@@ -270,13 +279,14 @@ def aktion(_, sitze, ui):
         elif aktion == "eintragen":
             arten = wertung.moegliche_spielarten(len(ui.get("auswahl", [])))
             if len(arten) == 1:
-                ui.update(phase="eingabe", spielart=arten[0])
+                ui.update(phase="eingabe", spielart=arten[0], stufe=wertung.STUFEN[0], laufende=0, herzsolo=False)
             elif arten:
                 ui["phase"] = "soloart"
         elif aktion == "spielart":
             ui.update(phase="eingabe", spielart=wert, stufe=wertung.STUFEN[0], laufende=0, herzsolo=False)
         elif aktion in ("stufe", "laufende"):
             ui[aktion] = wert
+            sie_gekoppelt(ui, aktion)
         elif aktion == "herzsolo":
             ui["herzsolo"] = not ui.get("herzsolo")
         elif aktion == "frage":
@@ -291,6 +301,22 @@ def aktion(_, sitze, ui):
         meldung, ui = str(e), zuruecksetzen(ui)
 
     return ansicht(turnier, ui, meldung, farbe), ui
+
+
+def sie_gekoppelt(ui: dict, geaendert: str) -> None:
+    """Bei einem gewonnenen Solo gehören Sie und alle 8 Laufenden zusammen: Wählt man das eine,
+    folgt das andere. Wählt man eines davon wieder ab, fällt auch das andere weg."""
+    if ui["spielart"] != wertung.SOLO or len(ui["auswahl"]) != 1:
+        return
+    sie, alle = ui.get("stufe") == wertung.SIE, ui.get("laufende") == wertung.SIE_LAUFENDE
+    if sie == alle:
+        return
+    if (sie if geaendert == "stufe" else alle):
+        ui.update(stufe=wertung.SIE, laufende=wertung.SIE_LAUFENDE, herzsolo=False)
+    elif geaendert == "stufe":
+        ui["laufende"] = 0
+    else:
+        ui["stufe"] = wertung.STUFEN[0]
 
 
 def aktuellen_stand_pruefen(turnier: Turnier, ui: dict):

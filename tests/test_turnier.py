@@ -9,7 +9,7 @@ import turnier as t
 import wertung
 
 
-TARIFE = {"sauspiel": 10, "solo": 20, "schneider": 10, "laufende": 10}
+TARIFE = {"sauspiel": 10, "solo": 20, "schneider": 10, "laufende": 10, "tout": 2, "sie": 4}
 
 
 @pytest.fixture
@@ -61,6 +61,13 @@ def test_spiele_eintragen_und_dateien(turnier):
         zeilen = list(csv.reader(f, delimiter="\t"))
     assert zeilen == [["spiel", "A", "B", "C", "D"], ["0", "100", "100", "100", "100"],
                       ["1", "110", "90", "110", "90"], ["2", "50", "270", "50", "30"]]
+
+
+def test_sie_ist_kein_herzsolo(turnier):
+    tr = turnier.tisch_anlegen(1, "Ober", ["A", "B", "C", "D"])
+    turnier.spiel_eintragen(tr, ["B"], wertung.SOLO, wertung.SIE, wertung.SIE_LAUFENDE, herzsolo=True)
+    spiel = turnier.tischrunde(1, "Ober").spiele[0]
+    assert (spiel["stufe"], spiel["spieler"], spiel["herzsolo"]) == (wertung.SIE, "B", "")
 
 
 def test_veralteter_stand_wird_abgelehnt(turnier):

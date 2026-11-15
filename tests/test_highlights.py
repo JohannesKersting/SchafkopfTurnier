@@ -5,7 +5,7 @@ import highlights
 import turnier as t
 import wertung
 
-TARIFE = {"sauspiel": 10, "solo": 20, "schneider": 10, "laufende": 10}
+TARIFE = {"sauspiel": 10, "solo": 20, "schneider": 10, "laufende": 10, "tout": 2, "sie": 4}
 
 
 def test_waehle():
@@ -89,6 +89,26 @@ def test_schwarz_gspuit(turnier, gewinner, art, erwartet):
     turnier.letztes_spiel_entfernen(turnier.tischrunde(1, "Ober"))
     turnier.spiel_eintragen(turnier.tischrunde(1, "Ober"), gewinner, art, "Schwarz")
     assert karten(turnier)["Schwarz gspuit!"] == [(*erwartet, "Runde 1 · Ober · Spiel 3")]
+
+
+@pytest.mark.parametrize("gewinner, titel", [(["B"], "Tout gspuit!"), (["A", "C", "D"], "Zu hoch gepokert")])
+def test_tout(turnier, gewinner, titel):
+    turnier.letztes_spiel_entfernen(turnier.tischrunde(1, "Ober"))
+    turnier.spiel_eintragen(turnier.tischrunde(1, "Ober"), gewinner, wertung.WENZ, wertung.TOUT)
+    k = karten(turnier)
+    assert k[titel] == [("B", wertung.WENZ, "Runde 1 · Ober · Spiel 3")]
+    assert "Schwarz gspuit!" not in k
+    andere = "Zu hoch gepokert" if titel == "Tout gspuit!" else "Tout gspuit!"
+    assert andere not in k
+
+
+def test_sie(turnier):
+    turnier.letztes_spiel_entfernen(turnier.tischrunde(1, "Ober"))
+    turnier.spiel_eintragen(turnier.tischrunde(1, "Ober"), ["D"], wertung.SOLO, wertung.SIE, wertung.SIE_LAUFENDE)
+    k = karten(turnier)
+    assert k["Des kimmt an d'Wand!"] == [("D", "", "Runde 1 · Ober · Spiel 3")]
+    assert k["Läuft bei dir!"] == [("D", 4 * 8 * TARIFE["laufende"] * 3, "")]
+    assert "Schwarz gspuit!" not in k
 
 
 def test_minimum_karten_erst_nach_turnierende(turnier):

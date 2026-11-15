@@ -1,9 +1,9 @@
 import pytest
 
 import wertung
-from wertung import SAUSPIEL, SOLO, WENZ, ZUSAMMENGEWORFEN
+from wertung import SAUSPIEL, SIE, SOLO, TOUT, WENZ, ZUSAMMENGEWORFEN
 
-TARIFE = {"sauspiel": 10, "solo": 20, "schneider": 10, "laufende": 10}
+TARIFE = {"sauspiel": 10, "solo": 20, "schneider": 10, "laufende": 10, "tout": 2, "sie": 4}
 SPIELER = ["A", "B", "C", "D"]
 
 
@@ -14,6 +14,9 @@ SPIELER = ["A", "B", "C", "D"]
     (SOLO, "Spiel", 0, 20),
     (SOLO, "Schwarz", 8, 120),
     (WENZ, "Schneider", 2, 50),
+    (SOLO, TOUT, 0, 40),
+    (WENZ, TOUT, 3, 100),
+    (SOLO, SIE, 8, 400),
 ])
 def test_spielwert(spielart, stufe, laufende, wert):
     assert wertung.spielwert(TARIFE, spielart, stufe, laufende) == wert
@@ -23,6 +26,39 @@ def test_spielwert(spielart, stufe, laufende, wert):
 def test_ungueltige_laufende(spielart, laufende):
     with pytest.raises(ValueError):
         wertung.spielwert(TARIFE, spielart, "Spiel", laufende)
+
+
+@pytest.mark.parametrize("spielart, stufe, laufende", [
+    (SAUSPIEL, TOUT, 0), (WENZ, SIE, 4), (SOLO, SIE, 0), (SOLO, SIE, 3)])
+def test_ungueltige_stufe(spielart, stufe, laufende):
+    with pytest.raises(ValueError):
+        wertung.spielwert(TARIFE, spielart, stufe, laufende)
+
+
+def test_sie_gewonnen():
+    assert wertung.punkte_aenderungen(TARIFE, SPIELER, ["C"], SOLO, SIE, 8) == \
+        {"A": -400, "B": -400, "C": 1200, "D": -400}
+
+
+def test_sie_kann_man_nicht_verlieren():
+    with pytest.raises(ValueError):
+        wertung.punkte_aenderungen(TARIFE, SPIELER, ["A", "B", "D"], SOLO, SIE, 8)
+
+
+def test_tout_verloren():
+    assert wertung.punkte_aenderungen(TARIFE, SPIELER, ["A", "B", "D"], WENZ, TOUT, 2) == \
+        {"A": 80, "B": 80, "C": -240, "D": 80}
+
+
+def test_gewonnenes_solo_mit_allen_laufenden_ist_sie():
+    with pytest.raises(ValueError):
+        wertung.punkte_aenderungen(TARIFE, SPIELER, ["C"], SOLO, "Schwarz", 8)
+    # Verloren: dann hatten die Gegenspieler alle Laufenden
+    assert wertung.punkte_aenderungen(TARIFE, SPIELER, ["A", "B", "D"], SOLO, "Spiel", 8)["C"] == -300
+
+
+def test_tout_faktor_einstellbar():
+    assert wertung.spielwert({**TARIFE, "tout": 3}, SOLO, TOUT, 0) == 60
 
 
 def test_sauspiel():
