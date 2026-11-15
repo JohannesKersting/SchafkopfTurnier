@@ -87,6 +87,40 @@
   touch-action: manipulation;
 }
 
+/* Spielverlauf: eigener Scrollbereich, damit „Zurück“ immer sichtbar bleibt */
+.verlauf-legende {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.tisch-verlauf {
+  max-height: calc(100dvh - 15rem);
+  overflow-y: auto;
+  border: 1px solid var(--sk-rand);
+  border-radius: 0.5rem;
+  background: var(--sk-karte);
+}
+
+.tisch-verlauf table {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.tisch-verlauf thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--sk-karte);
+}
+
+.tisch-verlauf .farb-icon {
+  height: 1.1rem;
+}
+
 .auswahl-raster {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));

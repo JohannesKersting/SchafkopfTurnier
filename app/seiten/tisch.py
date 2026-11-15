@@ -23,6 +23,7 @@ def layout(turnier: Turnier, tisch: str):
     return dbc.Container([
         deko.titel(f"Tisch {tisch}", turnier.name),
         dcc.Store(id="tisch-ui", data=ui),
+        dcc.Store(id="tisch-verlauf-scroll"),
         html.Div(id="tisch-inhalt", children=inhalt),
     ], className="tisch-seite")
 
@@ -60,6 +61,8 @@ def ansicht(turnier: Turnier, ui: dict, meldung=None, farbe="danger"):
                        duration=None if farbe == "danger" else 2500)] if meldung else []
     if not tr or ui.get("setup_runde"):
         teile += setup_ansicht(turnier, ui.get("setup_runde") or 1, zurueck=bool(tr))
+    elif ui.get("phase") == "verlauf":
+        teile += verlauf_ansicht(turnier, tr)
     elif turnier.runde_beendet(tr):
         teile += ende_ansicht(turnier, tr, ui)
     else:
@@ -132,8 +135,9 @@ def spiel_ansicht(turnier: Turnier, tr, ui: dict):
                 disabled=not wertung.moegliche_spielarten(len(auswahl))),
             btn("Zusammengeworfen", "frage", "zusammengeworfen", color="secondary", outline=True,
                 className="w-100 mt-2") if turnier.zusammenwerfen_erlaubt else None,
+            verlauf_knopf() if tr.spiele else None,
             btn("Letztes Spiel rückgängig", "frage", "rueckgaengig", color="link", size="sm",
-                className="w-100 mt-3 text-muted") if tr.spiele else None,
+                className="w-100 mt-2 text-muted") if tr.spiele else None,
         ]))
     elif phase == "frage":
         teile += frage(ui["frage"], tr)
@@ -226,9 +230,56 @@ def ende_ansicht(turnier: Turnier, tr, ui: dict):
             html.P("Turnier beendet. Danke fürs Spielen!", className="text-center mt-3") if letzte else
             btn(f"Runde {tr.runde + 1} starten", "naechste_runde", tr.runde + 1, color="primary", size="lg",
                 className="w-100 mt-3"),
+            verlauf_knopf(),
             btn("Letztes Spiel rückgängig", "frage", "rueckgaengig", color="link", size="sm",
-                className="w-100 mt-3 text-muted"),
+                className="w-100 mt-2 text-muted"),
         ]) if ui.get("phase") != "frage" else html.Div(frage(ui["frage"], tr)),
+    ]
+
+
+def verlauf_knopf():
+    return btn("Spielverlauf", "verlauf", color="secondary", outline=True, className="w-100 mt-4")
+
+
+def spiel_beschreibung(spiel: dict):
+    art, stufe = spiel["spielart"], spiel["stufe"]
+    if art == wertung.ZUSAMMENGEWORFEN:
+        return art
+    details = [spiel["spieler"]] if spiel["spieler"] else []
+    if spiel["laufende"] and stufe != wertung.SIE:
+        details.append(f"{spiel['laufende']} Laufende")
+    return [
+        html.Div([art if stufe == wertung.STUFEN[0] else f"{art} {stufe}",
+                  deko.farb_icon("herz", "farb-icon ms-1") if spiel["herzsolo"] else None]),
+        html.Div(" · ".join(details), className="small text-muted") if details else None,
+    ]
+
+
+def verlauf_ansicht(turnier: Turnier, tr):
+    """Alle Spiele der Runde: je Spieler der Stand groß und die Änderung klein darunter.
+    Das neueste Spiel steht unten, die Liste startet ganz unten gescrollt (siehe clientside_callback)."""
+    start = turnier.startpunkte
+
+    def zelle(stand, aenderung=None):
+        return html.Td([
+            html.Div(html.Strong(stand)),
+            html.Div(deko.wert(aenderung), className="small") if aenderung is not None else None,
+        ], className="text-end")
+
+    zeilen = [html.Tr([html.Td(), html.Td("Start")] + [zelle(start) for _ in tr.spieler])]
+    for spiel, stand in zip(tr.spiele, tr.punkte_verlauf(start)[1:]):
+        zeilen.append(html.Tr([html.Td(spiel["spiel"], className="text-muted"), html.Td(spiel_beschreibung(spiel))] +
+                              [zelle(stand[name], spiel["punkte"][name]) for name in tr.spieler]))
+    # Sitzsymbole statt Namen als Spaltenköpfe, damit vier Spalten aufs Handy passen
+    kopf = html.Thead(html.Tr([html.Th(), html.Th("Spiel")] +
+                              [html.Th(deko.farb_icon(deko.farbe(i)), className="text-end") for i in range(4)]))
+    return [
+        html.P(f"Runde {tr.runde} · Spielverlauf", className="text-center fw-bold"),
+        html.Div([html.Span([deko.farb_icon(deko.farbe(i), "farb-icon me-1"), name], className="text-nowrap")
+                  for i, name in enumerate(tr.spieler)], className="verlauf-legende"),
+        html.Div(dbc.Table([kopf, html.Tbody(zeilen)], size="sm", striped=True, className="mb-0"),
+                 id="tisch-verlauf", className="tisch-verlauf"),
+        btn("Zurück", "abbrechen", color="secondary", outline=True, size="lg", className="w-100 mt-2"),
     ]
 
 
@@ -289,6 +340,8 @@ def aktion(_, sitze, ui):
             sie_gekoppelt(ui, aktion)
         elif aktion == "herzsolo":
             ui["herzsolo"] = not ui.get("herzsolo")
+        elif aktion == "verlauf":
+            ui["phase"] = "verlauf"
         elif aktion == "frage":
             ui.update(phase="frage", frage=wert)
         elif aktion == "abbrechen":
@@ -325,6 +378,20 @@ def aktuellen_stand_pruefen(turnier: Turnier, ui: dict):
     if not tr or turnier.aktuelle_runde(ui["tisch"]) != ui["runde"] or len(tr.spiele) != ui["gesehen"]:
         raise TurnierFehler("Der Tisch wurde inzwischen verändert. Die Ansicht ist jetzt aktualisiert.")
     return tr
+
+
+# Der Spielverlauf startet ganz unten beim neuesten Spiel.
+clientside_callback(
+    """function() {
+        setTimeout(() => {
+            const liste = document.getElementById("tisch-verlauf");
+            if (liste) liste.scrollTop = liste.scrollHeight;
+        }, 0);
+        return window.dash_clientside.no_update;
+    }""",
+    Output("tisch-verlauf-scroll", "data"),
+    Input("tisch-inhalt", "children"),
+)
 
 
 # Ein Spieler, der auf einem Platz gewählt ist, verschwindet aus den anderen Dropdowns. Läuft im Browser,
