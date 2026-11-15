@@ -78,6 +78,15 @@
   line-height: 1.15;
 }
 
+/* Solo oder Wenz: quadratisch wie die Spielerkacheln, damit man sie gut trifft */
+.soloart-knopf {
+  aspect-ratio: 1;
+  border-radius: 0.9rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
 .auswahl-raster {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));

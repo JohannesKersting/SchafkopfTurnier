@@ -140,8 +140,8 @@ def spiel_ansicht(turnier: Turnier, tr, ui: dict):
     elif phase == "soloart":
         teile.append(html.Div([
             html.P("Solo oder Wenz?", className="text-center fw-bold mt-3"),
-            html.Div([btn(art, "spielart", art, color="primary", size="lg", className="flex-fill")
-                      for art in wertung.moegliche_spielarten(len(auswahl))], className="d-flex gap-2"),
+            html.Div([btn(art, "spielart", art, color="primary", className="soloart-knopf")
+                      for art in wertung.moegliche_spielarten(len(auswahl))], className="kachel-raster"),
             btn("Abbrechen", "abbrechen", color="secondary", outline=True, className="w-100 mt-2"),
         ]))
     elif phase == "eingabe":

@@ -3,3 +3,6 @@ spiel	geber	spielart	stufe	laufende	spieler	herzsolo	Tim	Jojo	Tessa	Michi
 2	Jojo	Sauspiel	Spiel	0			-1	1	-1	1
 3	Tessa	Wenz	Schwarz	4	Jojo		-8	24	-8	-8
 4	Michi	Solo	Sie	8	Tessa		-40	-40	120	-40
+5	Tim	Solo	Tout	7	Tim		54	-18	-18	-18
+6	Jojo	Solo	Tout	3	Tim		-30	10	10	10
+7	Tessa	Solo	Sie	8	Michi		-40	-40	-40	120
