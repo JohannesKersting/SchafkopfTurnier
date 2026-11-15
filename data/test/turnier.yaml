@@ -14,5 +14,7 @@ tarife:
   solo: 2
   schneider: 1
   laufende: 1
+  tout: 2
+  sie: 4
 zusammenwerfen_erlaubt: false
 basis_url: ''
